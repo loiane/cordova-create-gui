@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <title>Hello World</title>
+    </head>
+    <body>
+        <script type="text/javascript" src="cordova-2.6.0.js"></script>
+        <script type="text/javascript">
+            document.addEventListener('deviceready', onDeviceReady, false);
+            
+            function onDeviceReady() {
+                var el = document.getElementById('cordova_path');
+                var savedValue = localStorage.getItem('cordova_path');
+                if (savedValue) {
+                    el.value = savedValue;
+                }
+            }
+            
+            function getPath(cb, existingPath) {
+                var args = existingPath? [existingPath] : [];
+
+                var exec = cordova.require("cordova/exec");
+                exec(cb,
+                     null,
+                     "FileChooserPlugin",
+                     "chooseFolder",
+                     args);
+            }
+            
+            function setPath(path, id, save) {
+                var el = document.getElementById(id);
+                el.value = path;
+                
+                if (save) {
+                    localStorage[id] = path;
+                }
+            }
+
+            function validate() {
+                var cordovaPath = document.getElementById('cordova_path').value;
+                var newProjectPath = document.getElementById('new_project_path').value;
+                var packageName = document.getElementById('package_name').value;
+                var projectName = document.getElementById('project_name').value;
+                
+                return (
+                    cordovaPath.length > 0 &&
+                    newProjectPath.length > 0 &&
+                    packageName.length > 0 &&
+                    projectName.length > 0
+                );
+            }
+            
+            function createProject() {
+                if (!validate()) {
+                    alert('One or more values not entered completely.');
+                    return false;
+                }
+
+                var result = document.getElementById('result');
+                result.innerHTML = '';
+                
+                var cordovaPath = document.getElementById('cordova_path').value;
+                var shared = document.getElementById("shared").checked;
+                var newProjectPath = document.getElementById('new_project_path').value;
+                var packageName = document.getElementById('package_name').value;
+                var projectName = document.getElementById('project_name').value;
+                
+                var exec = cordova.require("cordova/exec");
+                exec(function(shellresult) {
+                         if (shellresult.data != undefined) {
+                            result.innerHTML = result.innerHTML + shellresult.data;
+                         } else if (shellresult.resultcode != undefined) {
+                             if (shellresult.resultcode == 0) {
+                                alert('New project created.');
+                             } else {
+                                alert('Error, resultcode: ' + shellresult.resultcode);
+                             }
+                         }
+                     },
+                     null,
+                     "ProjectUtilitiesPlugin",
+                     "createNewProject",
+                     [ cordovaPath, shared, newProjectPath, packageName, projectName ]
+                     );
+            }
+            
+        </script>
+        <div>Cordova Path:</div>
+        <input disabled="disabled" type="text" value="" id="cordova_path" style="width:250px" /><button onclick="getPath(function(path) { setPath(path, 'cordova_path', true); }, localStorage.getItem('cordova_path'))">Browse...</button>
+        <div>New Project Path:</div>
+        <input disabled="disabled" type="text" value="" id="new_project_path" style="width:250px" /><button onclick="getPath(function(path) { setPath(path, 'new_project_path', false); })">Browse...</button>
+        <div>Shared?:</div>
+        <input type="checkbox" value="" id="shared" />
+        <div>Package Name:</div>
+        <input type="text" value="" id="package_name" style="width:250px" />
+        <div>Project Name:</div>
+        <input type="text" value="" id="project_name" style="width:250px" />
+        <br />
+        <button onclick="createProject()">CREATE</button>
+        <div id="result"></div>
+    </body>
+</html>
